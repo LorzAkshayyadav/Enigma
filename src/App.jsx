@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import "./App.css";
 import toast from 'react-hot-toast';
-// import Plot from "react-plotly.js";
-// import RealTimeChart from "./RealTimeChart"; 
+import Plot from "react-plotly.js";
+import RealTimeChart from "./RealTimeChart"; 
 import { Toaster } from 'react-hot-toast';
 function App() {
   const [instruments, setInstruments] = useState({});
@@ -153,6 +153,7 @@ function App() {
                 data={selectedInstrument.readData}
                 onDataChange={(key, value) => handleWriteDataChange(selectedInstrument.id, key, value)}
               />
+              <RealTimeChart instrumentId={selectedInstrument.id} ws={ws.current} />
             </div>
           </div>
         )}
