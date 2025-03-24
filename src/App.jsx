@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import "./App.css";
 import toast from 'react-hot-toast';
+// import Plot from "react-plotly.js";
+// import RealTimeChart from "./RealTimeChart"; 
 import { Toaster } from 'react-hot-toast';
 function App() {
   const [instruments, setInstruments] = useState({});
@@ -11,7 +13,7 @@ function App() {
     const connectWebSocket = () => {
       if (ws.current) return;
   
-      ws.current = new WebSocket("ws://localhost:5000");
+      ws.current = new WebSocket("ws://localhost:5002");
   
       ws.current.onopen = () => {
         console.log("Connected to WebSocket server");
@@ -176,6 +178,9 @@ function App() {
             />
           </div>
         </div>
+      )}
+       {selectedInstrument && activeSection === "PlotData" && (
+         <RealTimeChart instrumentId={selectedInstrument.id} ws={ws.current} />
       )}
     </>
   );
