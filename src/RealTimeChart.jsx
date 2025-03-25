@@ -1,25 +1,41 @@
 import { useEffect, useState, useRef } from "react";
 import Plot from "react-plotly.js";
-
+import "./App.css";
 const RealTimeChart = ({ instrumentId, ws }) => {
-  const [dataPoints, setDataPoints] = useState({ x: [], position: [], velocity: [] });
+  const [dataPoints, setDataPoints] = useState({ x: [], data: {} });
+  const [selectedParameters, setSelectedParameters] = useState([]);
   const startTimeRef = useRef(Date.now());
+  const availableParams = [
+    "Actual Position", "Actual Velocity", "Actual Torque",
+    "Target Position", "Target Velocity", "Target Torque"
+  ];
+
+  const handleParameterChange = (param) => {
+    setSelectedParameters((prev) =>
+      prev.includes(param) ? prev.filter((p) => p !== param) : [...prev, param]
+    );
+  };
 
   useEffect(() => {
-    if (!ws || !instrumentId) return;
+    if (!ws || !instrumentId || selectedParameters.length === 0) return;
 
     const handleDataUpdate = (event) => {
       try {
         const data = JSON.parse(event.data);
         if (data.type === "update" && data.instruments?.[instrumentId]) {
-          const position = data.instruments[instrumentId].readData?.["Actual Position"] ?? 0;
-          const velocity = data.instruments[instrumentId].readData?.["Actual Velocity"] ?? 0;
           const elapsedTime = (Date.now() - startTimeRef.current) / 1000;
-          setDataPoints((prev) => ({
-            x: [...prev.x, elapsedTime],
-            position: [...prev.position, position],
-            velocity: [...prev.velocity, velocity],
-          }));
+          setDataPoints((prev) => {
+            const newX = [...prev.x, elapsedTime];
+            const newData = { ...prev.data };
+
+            selectedParameters.forEach((param) => {
+              const value = data.instruments[instrumentId].readData?.[param] ??
+                            data.instruments[instrumentId].writeData?.[param] ?? 0;
+              newData[param] = [...(newData[param] || []), value];
+            });
+
+            return { x: newX, data: newData };
+          });
         }
       } catch (error) {
         console.error("WebSocket message parsing error:", error);
@@ -28,36 +44,39 @@ const RealTimeChart = ({ instrumentId, ws }) => {
 
     ws.addEventListener("message", handleDataUpdate);
     return () => ws.removeEventListener("message", handleDataUpdate);
-  }, [ws, instrumentId]);
+  }, [ws, instrumentId, selectedParameters]);
 
   return (
     <div>
-      <h3>Real-Time Position & Velocity Plot</h3>
-      <Plot
-        data={[
-          {
+      <h3>Real-Time Data Plot</h3>
+      <div className="checkbox">
+        {availableParams.map((param) => (
+          <label key={param} style={{ marginRight: "10px" }}>
+            <input
+              type="checkbox"
+              checked={selectedParameters.includes(param)}
+              onChange={() => handleParameterChange(param)}
+            />
+            {param}
+          </label>
+        ))}
+      </div>
+      {selectedParameters.length > 0 && (
+        <Plot
+          data={selectedParameters.map((param) => ({
             x: dataPoints.x,
-            y: dataPoints.position,
+            y: dataPoints.data[param] || [],
             type: "scatter",
             mode: "lines",
-            name: "Position",
-            marker: { color: "red" },
-          },
-          {
-            x: dataPoints.x,
-            y: dataPoints.velocity,
-            type: "scatter",
-            mode: "lines",
-            name: "Velocity",
-            marker: { color: "blue" },
-          }
-        ]}
-        layout={{
-          title: "Actual Position & Velocity vs Time",
-          xaxis: { title: "Time (s)" },
-          yaxis: { title: "Values" },
-        }}
-      />
+            name: param,
+          }))}
+          layout={{
+            title: "Real-Time Data vs Time",
+            xaxis: { title: "Time (s)" },
+            yaxis: { title: "Values" },
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -110,7 +110,7 @@ function App() {
         <button onClick={() => setActiveSection("Instruments")}>Instruments</button>
         <button onClick={() => setActiveSection("ReadData")}>Read Data</button>
         <button onClick={() => setActiveSection("WriteData")}>Write Data</button>
-        <button onClick={() => setActiveSection("PlotData")}>Plot Data</button>
+        {/* <button onClick={() => setActiveSection("PlotData")}>Plot Data</button>  */}
       </div>
 
       {activeSection === "Instruments" && (

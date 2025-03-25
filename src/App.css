@@ -45,3 +45,8 @@ header {
   text-align: center;
   position: bottom;
 }
+.checkbox {
+  background-color: rgb(174, 118, 44);
+  margin: 5px;
+  width: 60%;
+}
